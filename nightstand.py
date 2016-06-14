@@ -1,24 +1,22 @@
+#!/usr/bin/python
+import sys
 import pygame
-import weathericons
+import pygame.freetype
+
+SCREEN_SIZE = (320,240)
+WINDOW_TITLE = 'Nightstand'
 
 pygame.init()
-screen = pygame.display.set_mode((320,240))
-pygame.display.set_caption('Nightstand')
+screen_surface = pygame.display.set_mode(SCREEN_SIZE)
+pygame.display.set_caption(WINDOW_TITLE)
 
-background = pygame.Surface(screen.get_size()).convert()
-background.fill((0,0,0))
+import screen
+gui = screen.Screen(screen_surface)
+gui.display_sunintensity()
 
-def blitBase():
-	screen.blit(background, (0,0))
-	screen.fill(Color(255,255,255,255), (0,175,320,180))
-	screen.blit(ToolbarIcons.Time, (20,190))
-	screen.blit(ToolbarIcons.Weather, (100,190))
-	screen.blit(ToolbarIcons.Pollen, (180,190))
-	screen.blit(ToolbarIcons.SunIntensity, (260, 190))
+event = pygame.event.wait()
+while event.type != pygame.QUIT:
+        event = pygame.event.wait()
 
-blitBase()
-pygame.display.flip()
-
-clock = pygame.time.Clock()
-while not pygame.QUIT in [e.type for e in pygame.event.get()]:
-	clock.tick(15)
+pygame.quit()
+sys.exit()
