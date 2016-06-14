@@ -1,21 +1,24 @@
 #!/usr/bin/python
 import sys
 import pygame
-import pygame.freetype
+import events
+import gui
 
-SCREEN_SIZE = (320,240)
-WINDOW_TITLE = 'Nightstand'
+from events import Events
+from gui import GUI
+
+TICK_TIME_MS = 1000
+SWITCH_TIME_MS = 7000
 
 pygame.init()
-screen_surface = pygame.display.set_mode(SCREEN_SIZE)
-pygame.display.set_caption(WINDOW_TITLE)
+screen = GUI()
 
-import screen
-gui = screen.Screen(screen_surface)
-gui.display_sunintensity()
-
+pygame.time.set_timer(Events.Tick, TICK_TIME_MS)
+pygame.time.set_timer(Events.Switch, SWITCH_TIME_MS)
 event = pygame.event.wait()
-while event.type != pygame.QUIT:
+
+while event.type != Events.Quit:
+        screen.route(event)
         event = pygame.event.wait()
 
 pygame.quit()
