@@ -16,7 +16,7 @@ from sunintensityfeed import SunIntensityFeed
 
 
 # TODO
-STATION_ID = '102'
+ZIPCODE = '40204'
 LONGITUDE = -85.7594
 LATITUDE = 38.2541
 
@@ -90,7 +90,7 @@ class GUI:
 
     def initFeeds(self):
         self.weatherFeed = WeatherFeed(LONGITUDE, LATITUDE)
-        self.pollenFeed = PollenFeed(STATION_ID)
+        self.pollenFeed = PollenFeed(ZIPCODE)
         self.sunIntensityFeed = SunIntensityFeed(LONGITUDE, LATITUDE)
 
         self.updateWeather()
