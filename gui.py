@@ -4,9 +4,22 @@ import pygame
 import pygame.freetype
 import events
 import weathericons
+import weatherfeed
+import pollenfeed
+import sunintensityfeed
 
 from events import Events
 from weathericons import *
+from weatherfeed import WeatherFeed
+from pollenfeed import PollenFeed
+from sunintensityfeed import SunIntensityFeed
+
+
+# TODO
+STATION_ID = '102'
+LONGITUDE = -85.7594
+LATITUDE = 38.2541
+
 
 MINUTE_DELTA = datetime.timedelta(minutes=1)
 CLOCK_TIME_FORMAT = '%I:%M %p'
@@ -42,6 +55,8 @@ class GUI:
         self.initComponents()
         self.initSwitchTracking()
         self.initTimeUpdates()
+        self.initFeeds()
+
         self.display_functions[self.current_display]()
 
     def initComponents(self):
@@ -61,6 +76,8 @@ class GUI:
             self.displaySunIntensity
         ]
 
+        self.display_function = self.display_functions[self.current_display]
+
     def initTimeUpdates(self):
         self.next_minute = self.addMinute()
 
@@ -70,6 +87,35 @@ class GUI:
         self.PollenIcons = weathericons.PollenIcons()
         self.SunIntensityIcons = weathericons.SunIntensityIcons()
         self.ToolbarIcons = weathericons.ToolbarIcons()
+
+    def initFeeds(self):
+        self.weatherFeed = WeatherFeed(LONGITUDE, LATITUDE)
+        self.pollenFeed = PollenFeed(STATION_ID)
+        self.sunIntensityFeed = SunIntensityFeed(LONGITUDE, LATITUDE)
+
+        self.updateWeather()
+        self.updatePollen()
+        self.updateSunIntensity()
+
+    def updateWeather(self):
+        response = self.weatherFeed.get()
+        self.temperature = response['temp']
+        self.weather = response['weather']
+
+        if self.display_function == self.displayWeather:
+            self.displayWeather()
+
+    def updatePollen(self):
+        self.pollen_count = self.pollenFeed.get()
+
+        if self.display_function == self.displayPollen:
+            self.displayPollen()
+
+    def updateSunIntensity(self):
+        self.sun_intensity = self.sunIntensityFeed.get()
+
+        if self.display_function == self.displaySunIntensity:
+            self.displaySunIntensity()
 
     def createWindow(self):
         screen_surface = pygame.display.set_mode(Window.Size)
@@ -108,37 +154,75 @@ class GUI:
         pygame.display.flip()
 
     def displayWeather(self):
+        temp_str = str(self.temperature) + ' F'
+        icon = self.getWeatherIcon()
+
         self.screen.blit(self.background, (0,0))
-        self.screen.blit(self.WeatherIcons.Clear, IconPos.Right)
-        # TODO
+        self.screen.blit(icon, IconPos.Right)
         self.font.render_to(
             self.screen,
-            self.centerText(' 95 F', TextPosRect.Left),
-            ' 95 F',
+            self.centerText(temp_str, TextPosRect.Left),
+            temp_str,
             Colors.White
         )
         pygame.display.flip()
 
+    def getWeatherIcon(self):
+        is_night = (datetime.datetime.now().hour >= 18)
+
+        if self.weather == 'cloudy':
+            if is_night:
+                return self.WeatherIcons.CloudyNight
+
+            return self.WeatherIcons.Cloudy
+        
+        if self.weather == 'rainy':
+            return self.WeatherIcons.Rainy
+        
+        if self.weather == 'snowy':
+            return self.WeatherIcons.Snowy
+        
+        if is_night:
+            return self.WeatherIcons.ClearNight
+
+        return self.WeatherIcons.Clear
+
     def displayPollen(self):
+        if self.pollen_count >= 6:
+            icon = self.PollenIcons.High
+        elif 3 <= self.pollen_count < 6:
+            icon = self.PollenIcons.Medium
+        else:
+            icon = self.PollenIcons.Low
+
+        pollen_str = str(self.pollen_count)
+
         self.screen.blit(self.background, (0,0))
-        self.screen.blit(self.PollenIcons.High, IconPos.Left)
-        # TODO
+        self.screen.blit(icon, IconPos.Left)
         self.font.render_to(
             self.screen,
-            self.centerText('6.8', TextPosRect.Right),
-            '6.8',
+            self.centerText(pollen_str, TextPosRect.Right),
+            pollen_str,
             Colors.White
         )
         pygame.display.flip()
 
     def displaySunIntensity(self):
+        if self.sun_intensity >= 8:
+            icon = self.SunIntensityIcons.High
+        elif 4 <= self.sun_intensity < 8:
+            icon = self.SunIntensityIcons.Medium
+        else:
+            icon = self.SunIntensityIcons.Low
+
+        sun_intensity_str = str(self.sun_intensity)
+        
         self.screen.blit(self.background, (0,0))
-        self.screen.blit(self.SunIntensityIcons.Medium, IconPos.Right)
-        # TODO
+        self.screen.blit(icon, IconPos.Right)
         self.font.render_to(
             self.screen,
-            self.centerText('10', TextPosRect.Left),
-            '10',
+            self.centerText(sun_intensity_str, TextPosRect.Left),
+            sun_intensity_str,
             Colors.White
         )
         pygame.display.flip()
@@ -148,15 +232,22 @@ class GUI:
             self.checkTimeUpdate()
         elif event.type == Events.Switch:
             self.nextScreen()
+        elif event.type == Events.UpdateWeatherFeed:
+            self.updateWeather()
+        elif event.type == Events.UpdatePollenFeed:
+            self.updatePollen()
+        elif event.type == Events.UpdateSunIntensityFeed:
+            self.updateSunIntensity()
 
     def checkTimeUpdate(self):
         current_time = datetime.datetime.now()
         display_function = self.display_functions[self.current_display]
         
-        if display_function == self.displayTime and current_time >= self.next_minute:
+        if self.display_function == self.displayTime and current_time >= self.next_minute:
             self.displayTime()
             self.next_minute = self.addMinute()
 
     def nextScreen(self):
         self.current_display = (self.current_display + 1) % len(self.display_functions)
-        self.display_functions[self.current_display]()
+        self.display_function = self.display_functions[self.current_display]
+        self.display_function()
