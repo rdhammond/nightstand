@@ -5,30 +5,24 @@ import events
 
 from events import Events
 
-ButtonEvents = {
-    '21': Events.Button1,
-    '22': Events.Button2,
-    '23': Events.Button3,
-    '24': Events.Button4
-}
+FIRST_BUTTON_PIN = 21
+BUTTON_COUNT = 4
+LAST_BUTTON_PIN = FIRST_BUTTON_PIN + BUTTON_COUNT
 
 class TFTSwitches:
     def __init__(self):
         GPIO.setmode(GPIO.BOARD)
         self.initButtons()
-        self.enableEvents()
 
     def initButtons(self):
-        for channel in ButtonChannels:
+        for channel in xrange(FIRST_BUTTON_PIN, LAST_BUTTON_PIN+1):
             GPIO.setup(channel, GPIO.IN)
-    
-    def enableEvents(self):
-        for channel in ButtonChannels:
             GPIO.add_event_detect(channel, GPIO.RISING)
             GPIO.add_event_callback(channel, self.sendEvent)
-
+    
     def sendEvent(self, channel):
-        event = pygame.event.Event(ButtonEvents[str(channel)])
+        buttonNumber = channel - FIRST_BUTTON_PIN
+        event = pygame.event.Event(Events.Button, {'buttonNumber': buttonNumber})
         pygame.event.post(event)
 
     def cleanup(self):

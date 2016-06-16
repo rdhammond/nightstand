@@ -55,7 +55,7 @@ class Nightstand:
                         event = pygame.event.wait()
 
         def route(self, event):
-            if event.type in [Events.Button1, Events.Button2, Events.Button3, Events.Button4]:
+            if event.type == Events.Button:
                 self.resetSwitchTimer()
 
         def resetSwitchTimer(self):

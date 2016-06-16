@@ -3,13 +3,13 @@ import datetime
 import pygame
 import pygame.freetype
 import events
-import weathericons
+import icons
 import weatherfeed
 import pollenfeed
 import sunintensityfeed
 
 from events import Events
-from weathericons import *
+from icons import Icons
 from weatherfeed import WeatherFeed
 from pollenfeed import PollenFeed
 from sunintensityfeed import SunIntensityFeed
@@ -82,11 +82,24 @@ class GUI:
         self.next_minute = self.addMinute()
 
     def initIcons(self):
-        self.TimeIcons = weathericons.TimeIcons()
-        self.WeatherIcons = weathericons.WeatherIcons()
-        self.PollenIcons = weathericons.PollenIcons()
-        self.SunIntensityIcons = weathericons.SunIntensityIcons()
-        self.ToolbarIcons = weathericons.ToolbarIcons()
+        self.Icons = Icons()
+        self.Icons.Clock.setPos(IconPos.Left)
+        self.Icons.Clear.setPos(IconPos.Right)
+        self.Icons.ClearNight.setPos(IconPos.Right)
+        self.Icons.Cloudy.setPos(IconPos.Right)
+        self.Icons.CloudyNight.setPos(IconPos.Right)
+        self.Icons.Rainy.setPos(IconPos.Right)
+        self.Icons.Snowy.setPos(IconPos.Right)
+        self.Icons.LowPollen.setPos(IconPos.Left)
+        self.Icons.MediumPollen.setPos(IconPos.Left)
+        self.Icons.HighPollen.setPos(IconPos.Left)
+        self.Icons.LowSunIntensity.setPos(IconPos.Right)
+        self.Icons.MediumSunIntensity.setPos(IconPos.Right)
+        self.Icons.HighSunIntensity.setPos(IconPos.Right)
+        self.Icons.ToolbarTime.setPos(ToolbarPos.Time)
+        self.Icons.ToolbarWeather.setPos(ToolbarPos.Weather)
+        self.Icons.ToolbarPollen.setPos(ToolbarPos.Pollen)
+        self.Icons.ToolbarSunIntensity.setPos(ToolbarPos.SunIntensity)
 
     def initFeeds(self):
         self.weatherFeed = WeatherFeed(LONGITUDE, LATITUDE)
@@ -125,12 +138,15 @@ class GUI:
     def createBackground(self):
         background_size = self.screen.get_size()
         background = pygame.Surface(background_size).convert()
-        background.blit(self.ToolbarIcons.Time, ToolbarPos.Time)
-        background.blit(self.ToolbarIcons.Weather, ToolbarPos.Weather)
-        background.blit(self.ToolbarIcons.Pollen, ToolbarPos.Pollen)
-        background.blit(self.ToolbarIcons.SunIntensity, ToolbarPos.SunIntensity)
-        background.fill(Colors.White, ToolbarPos.LineRect)
+        self.blitToolbarTo(background)
         return background
+
+    def blitToolbarTo(self, surface):
+        self.Icons.ToolbarTime.blitTo(surface)
+        self.Icons.ToolbarWeather.blitTo(surface)
+        self.Icons.ToolbarPollen.blitTo(surface)
+        self.Icons.ToolbarSunIntensity.blitTo(surface)
+        surface.fill(Colors.White, ToolbarPos.LineRect)
 
     def addMinute(self):
         return (datetime.datetime.now() + MINUTE_DELTA).replace(second=0, microsecond=0)
@@ -144,7 +160,7 @@ class GUI:
     def displayTime(self):
         time_str = datetime.datetime.now().strftime(CLOCK_TIME_FORMAT)
         self.screen.blit(self.background, (0,0))
-        self.screen.blit(self.TimeIcons.Clock, IconPos.Left)
+        self.Icons.Clock.blitTo(self.screen)
         self.font.render_to(
             self.screen,
             self.centerText(time_str, TextPosRect.Right),
@@ -158,7 +174,7 @@ class GUI:
         icon = self.getWeatherIcon()
 
         self.screen.blit(self.background, (0,0))
-        self.screen.blit(icon, IconPos.Right)
+        icon.blitTo(self.screen)
         self.font.render_to(
             self.screen,
             self.centerText(temp_str, TextPosRect.Left),
@@ -172,33 +188,33 @@ class GUI:
 
         if self.weather == 'cloudy':
             if is_night:
-                return self.WeatherIcons.CloudyNight
+                return self.Icons.CloudyNight
 
-            return self.WeatherIcons.Cloudy
+            return self.Icons.Cloudy
         
         if self.weather == 'rainy':
-            return self.WeatherIcons.Rainy
+            return self.Icons.Rainy
         
         if self.weather == 'snowy':
-            return self.WeatherIcons.Snowy
+            return self.Icons.Snowy
         
         if is_night:
-            return self.WeatherIcons.ClearNight
+            return self.Icons.ClearNight
 
-        return self.WeatherIcons.Clear
+        return self.Icons.Clear
 
     def displayPollen(self):
         if self.pollen_count >= 6:
-            icon = self.PollenIcons.High
+            icon = self.Icons.HighPollen
         elif 3 <= self.pollen_count < 6:
-            icon = self.PollenIcons.Medium
+            icon = self.Icons.MediumPollen
         else:
-            icon = self.PollenIcons.Low
+            icon = self.Icons.LowPollen
 
         pollen_str = str(self.pollen_count)
 
         self.screen.blit(self.background, (0,0))
-        self.screen.blit(icon, IconPos.Left)
+        icon.blitTo(self.screen)
         self.font.render_to(
             self.screen,
             self.centerText(pollen_str, TextPosRect.Right),
@@ -209,16 +225,16 @@ class GUI:
 
     def displaySunIntensity(self):
         if self.sun_intensity >= 8:
-            icon = self.SunIntensityIcons.High
+            icon = self.Icons.HighSunIntensity
         elif 4 <= self.sun_intensity < 8:
-            icon = self.SunIntensityIcons.Medium
+            icon = self.Icons.MediumSunIntensity
         else:
-            icon = self.SunIntensityIcons.Low
+            icon = self.Icons.LowSunIntensity
 
         sun_intensity_str = str(self.sun_intensity)
         
         self.screen.blit(self.background, (0,0))
-        self.screen.blit(icon, IconPos.Right)
+        icon.blitTo(self.screen)
         self.font.render_to(
             self.screen,
             self.centerText(sun_intensity_str, TextPosRect.Left),
@@ -228,14 +244,8 @@ class GUI:
         pygame.display.flip()
 
     def route(self, event):
-        if event.type == Events.Button1:
-            self.displayTime()
-        elif event.type == Events.Button2:
-            self.displayWeather()
-        elif event.type == Events.Button3:
-            self.displayPollen()
-        elif event.type == Events.Button4:
-            self.displaySunIntensity()
+        if event.type == Events.Button:
+            self.setScreen(event.buttonNumber)
         elif event.type == Events.Tick:
             self.checkTimeUpdate()
         elif event.type == Events.Switch:
@@ -246,6 +256,8 @@ class GUI:
             self.updatePollen()
         elif event.type == Events.UpdateSunIntensityFeed:
             self.updateSunIntensity()
+        elif event.type == Events.Click:
+            self.checkClick(event.button, event.pos)
 
     def checkTimeUpdate(self):
         current_time = datetime.datetime.now()
@@ -255,7 +267,29 @@ class GUI:
             self.displayTime()
             self.next_minute = self.addMinute()
 
+    def setScreen(self, index):
+        self.current_display = index
+        self.display_functions[index]()
+
     def nextScreen(self):
         self.current_display = (self.current_display + 1) % len(self.display_functions)
         self.display_function = self.display_functions[self.current_display]
         self.display_function()
+
+    def checkClick(self, button, pos):
+        if button != 1:
+            return
+
+        if self.Icons.ToolbarTime.contains(pos):
+            buttonNumber = 0
+        elif self.Icons.ToolbarWeather.contains(pos):
+            buttonNumber = 1
+        elif self.Icons.ToolbarPollen.contains(pos):
+            buttonNumber = 2
+        elif self.Icons.ToolbarSunIntensity.contains(pos):
+            buttonNumber = 3
+        else:
+            return
+
+        event = pygame.event.Event(Events.Button, {'buttonNumber': buttonNumber})
+        pygame.event.post(event)
