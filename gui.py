@@ -228,7 +228,15 @@ class GUI:
         pygame.display.flip()
 
     def route(self, event):
-        if event.type == Events.Tick:
+        if event.type == Events.Button1:
+            self.displayTime()
+        elif event.type == Events.Button2:
+            self.displayWeather()
+        elif event.type == Events.Button3:
+            self.displayPollen()
+        elif event.type == Events.Button4:
+            self.displaySunIntensity()
+        elif event.type == Events.Tick:
             self.checkTimeUpdate()
         elif event.type == Events.Switch:
             self.nextScreen()

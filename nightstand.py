@@ -22,21 +22,48 @@ class TimeLengths:
         UpdateWeatherFeed = minToMs(15)
         UpdatePollenFeed = hoursToMs(4)
         UpdateSunIntensityFeed = hoursToMs(1)
-        
 
-pygame.init()
-screen = GUI()
+class Nightstand:
+        def __init__(self):
+                pygame.init()
+                self.screen = GUI()
+                self.switches = self.initSwitches()
+                self.initTimers()
 
-pygame.time.set_timer(Events.Tick, TimeLengths.Tick)
-pygame.time.set_timer(Events.Switch, TimeLengths.Switch)
-pygame.time.set_timer(Events.UpdateWeatherFeed, TimeLengths.UpdateWeatherFeed)
-pygame.time.set_timer(Events.UpdatePollenFeed, TimeLengths.UpdatePollenFeed)
-pygame.time.set_timer(Events.UpdateSunIntensityFeed, TimeLengths.UpdateSunIntensityFeed)
-event = pygame.event.wait()
+        def initSwitches(self):
+                try:
+                        import tftswitches
+                        from tftswitches import TFTSwitches
+                        return TFTSwitches()
 
-while event.type != Events.Quit:
-        screen.route(event)
-        event = pygame.event.wait()
+                except ImportError:
+                        return None
 
-pygame.quit()
-sys.exit()
+        def initTimers(self):
+                pygame.time.set_timer(Events.Tick, TimeLengths.Tick)
+                pygame.time.set_timer(Events.Switch, TimeLengths.Switch)
+                pygame.time.set_timer(Events.UpdateWeatherFeed, TimeLengths.UpdateWeatherFeed)
+                pygame.time.set_timer(Events.UpdatePollenFeed, TimeLengths.UpdatePollenFeed)
+                pygame.time.set_timer(Events.UpdateSunIntensityFeed, TimeLengths.UpdateSunIntensityFeed)
+
+        def run(self):
+                event = pygame.event.wait()
+
+                while event.type != Events.Quit:
+                        self.route(event)
+                        self.screen.route(event)
+                        event = pygame.event.wait()
+
+        def route(self, event):
+            if event.type in [Events.Button1, Events.Button2, Events.Button3, Events.Button4]:
+                self.resetSwitchTimer()
+
+        def resetSwitchTimer(self):
+            pygame.time.set_timer(Events.Switch, 0)
+            pygame.time.set_timer(Events.Switch, TimeLengths.Switch)
+
+        def cleanup(self):
+                if self.switches is not None:
+                        self.switches.cleanup()
+
+                pygame.quit()
