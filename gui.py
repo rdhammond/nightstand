@@ -104,7 +104,7 @@ class GUI:
     def initFeeds(self):
         self.weatherFeed = WeatherFeed(LONGITUDE, LATITUDE)
         self.pollenFeed = PollenFeed(ZIPCODE)
-        self.sunIntensityFeed = SunIntensityFeed(LONGITUDE, LATITUDE)
+        self.sunIntensityFeed = SunIntensityFeed(ZIPCODE)
 
         self.updateWeather()
         self.updatePollen()
@@ -204,9 +204,9 @@ class GUI:
         return self.Icons.Clear
 
     def displayPollen(self):
-        if self.pollen_count >= 6:
+        if self.pollen_count >= 7:
             icon = self.Icons.HighPollen
-        elif 3 <= self.pollen_count < 6:
+        elif 3 < self.pollen_count < 7:
             icon = self.Icons.MediumPollen
         else:
             icon = self.Icons.LowPollen
@@ -224,9 +224,9 @@ class GUI:
         pygame.display.flip()
 
     def displaySunIntensity(self):
-        if self.sun_intensity >= 8:
+        if self.sun_intensity >= 7:
             icon = self.Icons.HighSunIntensity
-        elif 4 <= self.sun_intensity < 8:
+        elif 3 < self.sun_intensity < 7:
             icon = self.Icons.MediumSunIntensity
         else:
             icon = self.Icons.LowSunIntensity
