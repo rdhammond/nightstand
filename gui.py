@@ -3,25 +3,16 @@ import datetime
 import pygame
 import pygame.freetype
 import events
-import icons
-import weatherfeed
-import pollenfeed
-import sunintensityfeed
 
 from events import Events
 from icons import Icons
-from weatherfeed import WeatherFeed
-from pollenfeed import PollenFeed
-from sunintensityfeed import SunIntensityFeed
-
-
-# TODO
-ZIPCODE = '40204'
-LONGITUDE = -85.7594
-LATITUDE = 38.2541
-
+from net.geolocation import GeoLocation
+from feeds.weatherfeed import WeatherFeed
+from feeds.pollenfeed import PollenFeed
+from feeds.sunintensityfeed import SunIntensityFeed
 
 MINUTE_DELTA = datetime.timedelta(minutes=1)
+DAY_DELTA = datetime.timedelta(days=1)
 CLOCK_TIME_FORMAT = '%I:%M %p'
 
 class Window:
@@ -52,12 +43,31 @@ class ToolbarPos:
 
 class GUI:
     def __init__(self):
+        self.initGeoLocation()
         self.initComponents()
         self.initSwitchTracking()
         self.initTimeUpdates()
         self.initFeeds()
 
         self.display_functions[self.current_display]()
+
+    def initGeoLocation(self):
+        self.geolocation = GeoLocation()
+
+        ip = self.geolocation.getIp()
+        location = self.geolocation.getLocation(ip)
+
+        self.lat = location['latitude']
+        self.lon = location['longitude']
+        self.zipcode = location['zipcode']
+        self.updateSunriseSunset()
+
+    def updateSunriseSunset(self):
+        sunrise_sunset = self.geolocation.getSunriseSunset(self.lat, self.lon)
+        self.sunrise = sunrise_sunset['sunrise']
+        self.sunset = sunrise_sunset['sunset']
+        
+        self.next_sunrise_sunset_check = (datetime.datetime.utcnow() + DAY_DELTA).replace(hour=0, minute=0, second=0, microsecond=0)
 
     def initComponents(self):
         self.screen = self.createWindow()
@@ -102,9 +112,9 @@ class GUI:
         self.Icons.ToolbarSunIntensity.setPos(ToolbarPos.SunIntensity)
 
     def initFeeds(self):
-        self.weatherFeed = WeatherFeed(LONGITUDE, LATITUDE)
-        self.pollenFeed = PollenFeed(ZIPCODE)
-        self.sunIntensityFeed = SunIntensityFeed(ZIPCODE)
+        self.weatherFeed = WeatherFeed(self.lon, self.lat)
+        self.pollenFeed = PollenFeed(self.zipcode)
+        self.sunIntensityFeed = SunIntensityFeed(self.zipcode)
 
         self.updateWeather()
         self.updatePollen()
@@ -184,7 +194,8 @@ class GUI:
         pygame.display.flip()
 
     def getWeatherIcon(self):
-        is_night = (datetime.datetime.now().hour >= 18)
+        utcnow = datetime.datetime.utcnow()
+        is_night = utcnow < self.sunrise or utcnow >= self.sunset
 
         if self.weather == 'cloudy':
             if is_night:
@@ -261,11 +272,18 @@ class GUI:
 
     def checkTimeUpdate(self):
         current_time = datetime.datetime.now()
+        current_utc_time = datetime.datetime.utcnow()
+
+        if current_utc_time >= self.next_sunrise_sunset_check:
+            self.updateSunriseSunset()
+
         display_function = self.display_functions[self.current_display]
-        
-        if self.display_function == self.displayTime and current_time >= self.next_minute:
-            self.displayTime()
+
+        if current_time >= self.next_minute:
             self.next_minute = self.addMinute()
+
+            if self.display_function == self.displayTime:
+                self.displayTime()
 
     def setScreen(self, index):
         self.current_display = index

@@ -1,6 +1,4 @@
 #!/usr/bin/python
-import nightstandicon
-
 from nightstandicon import NightstandIcon
 
 class Icons:

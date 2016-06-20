@@ -1,5 +1,4 @@
-import nightstand
-
+#!/usr/bin/python
 from nightstand import Nightstand
 
 app = Nightstand()
