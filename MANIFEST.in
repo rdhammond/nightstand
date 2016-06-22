@@ -1,0 +1,2 @@
+include nightstand.sh
+recursive-include nightstand *
